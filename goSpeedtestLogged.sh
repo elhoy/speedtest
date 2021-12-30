@@ -1,19 +1,27 @@
 #! /bin/sh
 ## Homebrew version of Ooklas CLI speedtest, to add CSV logging.
+## (all-in-one easy test from Ookla call would be ./speedtest --ca-certificate=cacert.pem)
 ## elhoy :oD, Dec 2021
 ##
 
 ##CHANGELOG
+## 20211230 added quick good/bad result field based on ADSL 4.2Mb DL min OR latency >50ms; removed Ookla call; added more comments
 ## 20211223 first upload to github
 ## 20211221 conversion of speed via case to bits per sec
 ## 20211216 first script
 
 clear
 
+## SET VALUES
 NOWTIME=$(date -Iminutes)
 TESTURL="http://ipv4.download.thinkbroadband.com/5MB.zip"
-WAITTIME=60
+WAITTIME=60  #seconds
+GOODPING=50  #ms
+GOODSPEED=4200000  #bps
 
+## ------------
+
+## OPEN NEW LOGFILE
 if [ ! -z $1 ]
 then
   LOGFILE=$1
@@ -23,16 +31,16 @@ fi
 
 touch $LOGFILE
 echo "Starting speedtest logfile, " $LOGFILE
-echo "Time,DL Speed,Unit,Packet Loss,Ping (ms)" > $LOGFILE
+echo "Time,DL Speed,Unit,Packet Loss,Ping (ms),Speed Result (>"$GOODSPEED"),PingResult (<"$GOODPING")" > $LOGFILE
 
+
+## GO LOGGING!
 while 
   NOWTIME=$(date -Iminutes)  
   echo $NOWTIME
   echo
-## all-in-one easy test from Ookla
-##  ./speedtest --ca-certificate=cacert.pem
-##  wget -O /dev/null -q --show-progress http://ipv4.download.thinkbroadband.com/20MB.zip | cut -d " " -f 4
 
+  #Do tests
   echo "Download test..."
   echo $TESTURL
   #note report-speed=bits shows bps rather than Bytes per sec
@@ -47,16 +55,35 @@ while
   RTT=$(echo $PINGRESULT | cut -d "=" -f 2 | cut -d "/" -f 2)
   echo $RTT
 
-  #Display to screen
-  echo $NOWTIME","$SPEEDVAL $SPEEDUNIT","$LOSS"% loss,"$RTT"ms."
-  #CSV to file, with speed in plottable units
-  case "$SPEEDUNIT" in
+
+  #Convert speed val to comparable base units, with console output
+    case "$SPEEDUNIT" in
     *G* ) echo "gig"; SPEEDVALLOG=$(echo "$SPEEDVAL*10^9" | bc);;
     *M* ) echo "mega";SPEEDVALLOG=$(echo "$SPEEDVAL*10^6" | bc);;
     *K* ) echo "kilo";SPEEDVALLOG=$(echo "$SPEEDVAL*10^3" | bc);;
     * ) echo "bits";SPEEDVALLOG=$SPEEDVAL;;
   esac
-  echo $NOWTIME","$SPEEDVALLOG","$SPEEDUNIT","$LOSS","$RTT >> $LOGFILE
+  
+  #Compare speed
+  SPEEDTEXT="Bad Speed"
+  if [ $(echo "$SPEEDVALLOG > $GOODSPEED" | bc -l) ]
+  then
+	SPEEDTEXT="Good Speed"
+  fi
+  #Compare ping
+  PINGTEXT="Bad Latency"
+  if [ $(echo "$RTT < $GOODPING" | bc -l) ]
+  then
+    PINGTEXT="Good Latency"
+  fi
+  
+
+  #Display to screen
+  echo $NOWTIME","$SPEEDVAL $SPEEDUNIT","$LOSS"% loss,"$RTT"ms."
+  echo "Result Summary = "$SPEEDTEXT"; "$PINGTEXT"."
+  
+  #CSV to file, with speed in plottable units
+  echo $NOWTIME","$SPEEDVALLOG","$SPEEDUNIT","$LOSS","$RTT","$SPEEDTEXT","$PINGTEXT >> $LOGFILE
 
   
   printf "waiting...\n\n"
