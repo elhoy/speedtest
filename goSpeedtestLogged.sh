@@ -66,13 +66,14 @@ while
   
   #Compare speed
   SPEEDTEXT="Bad Speed"
-  if [ $(echo "$SPEEDVALLOG > $GOODSPEED" | bc -l) ]
+  if [ $(echo "$SPEEDVALLOG > $GOODSPEED" | bc -l) -gt 0 ]
   then
 	SPEEDTEXT="Good Speed"
   fi
   #Compare ping
   PINGTEXT="Bad Latency"
-  if [ $(echo "$RTT < $GOODPING" | bc -l) ]
+  echo $(echo "$RTT < $GOODPING" | bc -l)
+  if [ $(echo "$RTT < $GOODPING" | bc -l) -gt 0 ]
   then
     PINGTEXT="Good Latency"
   fi
