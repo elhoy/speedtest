@@ -5,6 +5,7 @@
 ##
 
 ##CHANGELOG
+## 20220105 corrected hard coded DL URL for variable name; switched 5MB test file for 25MB (longer average)
 ## 20211230 added quick good/bad result field based on ADSL 4.2Mb DL min OR latency >50ms; removed Ookla call; added more comments
 ## 20211223 first upload to github
 ## 20211221 conversion of speed via case to bits per sec
@@ -14,7 +15,7 @@ clear
 
 ## SET VALUES
 NOWTIME=$(date -Iminutes)
-TESTURL="http://ipv4.download.thinkbroadband.com/5MB.zip"
+TESTURL="http://ipv4.download.thinkbroadband.com/25MB.zip"
 WAITTIME=60  #seconds
 GOODPING=50  #ms
 GOODSPEED=4200000  #bps
@@ -44,7 +45,7 @@ while
   echo "Download test..."
   echo $TESTURL
   #note report-speed=bits shows bps rather than Bytes per sec
-  DLRESULT=$(wget --report-speed=bits -o- --delete-after http://ipv4.download.thinkbroadband.com/5MB.zip | grep saved | cut -d " " -f 3,4)
+  DLRESULT=$(wget --report-speed=bits -o- --delete-after $TESTURL | grep saved | cut -d " " -f 3,4)
   SPEEDVAL=$(echo $DLRESULT | cut -d "(" -f 2  | cut -d " " -f 1)
   SPEEDUNIT=$(echo $DLRESULT | cut -d " " -f 2 | cut -d ")" -f 1)
   echo $SPEEDVAL $SPEEDUNIT
